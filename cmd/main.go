@@ -29,7 +29,7 @@ func (s *server) Get(ctx context.Context, request *desc.GetRequest) (*desc.GetRe
 		Info: &desc.User{
 			Id: request.Id,
 			Info: &desc.UserInfo{
-				Name:            "Стёпа",
+				Name:            "Стёпа1",
 				Email:           gofakeit.Email(),
 				Password:        gofakeit.Password(true, true, true, true, true, 10),
 				PasswordConfirm: gofakeit.Password(true, true, true, true, true, 10),
