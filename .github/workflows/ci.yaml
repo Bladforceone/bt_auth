@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
@@ -14,44 +14,60 @@ env:
   CONTAINER_NAME: "auth-container"
 
 jobs:
-  image-build-and-push:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout master
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Login to Docker Registry
-        run: docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} $REGISTRY
+      - name: Login to Selectel Registry
+        run: |
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login cr.selcloud.ru -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
-      - name: Build and Push Docker Image
+      - name: Build and push Docker image
         run: |
           TAG_NAME=$(echo $GITHUB_SHA | head -c7)
-          docker buildx create --use
-          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_NAME:$TAG_NAME -f Dockerfile .
+          docker buildx build \
+            --platform linux/amd64 \
+            --push \
+            --no-cache \
+            --tag $REGISTRY/$IMAGE_NAME:$TAG_NAME \
+            --tag $REGISTRY/$IMAGE_NAME:latest \
+            -f Dockerfile .
 
-  deploy-image:
+  deploy:
     runs-on: ubuntu-latest
-    needs: image-build-and-push
+    needs: build-and-push
 
     steps:
-      - name: Deploy to Selectel Cloud via SSH action
+      - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          envs: IMAGE_NAME,REGISTRY,GITHUB_SHA,CONTAINER_NAME
           script: |
             TAG_NAME=$(echo $GITHUB_SHA | head -c7)
+            FULL_IMAGE_NAME="$REGISTRY/$IMAGE_NAME:$TAG_NAME"
             
-            docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} $REGISTRY
+            # Login to registry
+            echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login cr.selcloud.ru -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
             
-            docker stop $CONTAINER_NAME
+            # Stop and remove old container if exists
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
             
-            docker rm $CONTAINER_NAME
+            # Pull new image and run
+            docker pull $FULL_IMAGE_NAME
+            docker run -d \
+              -p 8080:8080 \
+              --name $CONTAINER_NAME \
+              --restart unless-stopped \
+              $FULL_IMAGE_NAME
             
-            docker run -d -p 8080:8080 --name $CONTAINER_NAME -t $TAG_NAME
+            # Cleanup old images
+            docker image prune -af
