@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: "cr.selcloud.ru/bladforceone"
-  IMAGE_NAME: "auth"
+  IMAGE_NAME: "test-server"
   CONTAINER_NAME: "auth-container"
 
 jobs:
