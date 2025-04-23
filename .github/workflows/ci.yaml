@@ -43,6 +43,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
+          port: '22'
           envs: IMAGE_NAME,REGISTRY,GITHUB_SHA,CONTAINER_NAME
           script: |
             TAG_NAME=$(echo $GITHUB_SHA | head -c7)
