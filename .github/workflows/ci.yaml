@@ -52,9 +52,26 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || '22' }}
           script: |
-            echo "Успешное подключение!"
+            # Устанавливаем переменные явно
+            REGISTRY="cr.selcloud.ru/bladforceone"
+            IMAGE_NAME="auth"
+            CONTAINER_NAME="auth-container"
             TAG_NAME=$(echo $GITHUB_SHA | head -c7)
-            docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} $REGISTRY
+            FULL_IMAGE="$REGISTRY/$IMAGE_NAME:$TAG_NAME"
+
+            # Безопасный вход в реестр
+            echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login cr.selcloud.ru -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+
+            # Останавливаем и удаляем контейнер (игнорируем ошибки если контейнера нет)
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
-            docker run -d -p 8080:8080 --name $CONTAINER_NAME $REGISTRY/$IMAGE_NAME:$TAG_NAME
+
+            # Запускаем новый контейнер
+            docker run -d \
+              -p 8080:8080 \
+              --name $CONTAINER_NAME \
+              --restart unless-stopped \
+              $FULL_IMAGE
+
+            # Очистка
+            docker image prune -af
