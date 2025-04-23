@@ -38,20 +38,23 @@ jobs:
     needs: image-build-and-push
 
     steps:
-      - name: Deploy to Selectel Cloud via SSH action
+      - name: Verify network
+        run: |
+          echo "Проверяем подключение к ${{ secrets.SERVER_HOST }}"
+          ping -c 3 ${{ secrets.SERVER_HOST }} || echo "Ping failed"
+          nc -zv ${{ secrets.SERVER_HOST }} 22 || echo "Port 22 unavailable"
+
+      - name: Deploy
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.SSH_USERNAME }}
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          port: '22'
-          envs: IMAGE_NAME,REGISTRY,GITHUB_SHA,CONTAINER_NAME
+          port: ${{ secrets.SSH_PORT || '22' }}
           script: |
+            echo "Успешное подключение!"
             TAG_NAME=$(echo $GITHUB_SHA | head -c7)
-            
             docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} $REGISTRY
-            
-            docker stop $CONTAINER_NAME
-            
-            docker rm $CONTAINER_NAME
-            
-            docker run -d -p 8080:8080 --name $CONTAINER_NAME -t $REGISTRY/$IMAGE_NAME:$TAG_NAME
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+            docker run -d -p 8080:8080 --name $CONTAINER_NAME $REGISTRY/$IMAGE_NAME:$TAG_NAME
