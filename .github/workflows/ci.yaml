@@ -51,48 +51,44 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || '22' }}
-          envs: GITHUB_SHA  # Ключевое исправление - передаём переменную
+          envs: GITHUB_SHA
           script: |
+            set -e  # Прерывать при ошибках
+
             # Устанавливаем переменные
             REGISTRY="cr.selcloud.ru/bladforceone"
             IMAGE_NAME="auth"
             CONTAINER_NAME="auth-container"
 
-            # Формируем тег (первые 7 символов SHA)
+            # Формируем тег
             TAG_NAME=$(echo "$GITHUB_SHA" | head -c7)
-            [ -z "$TAG_NAME" ] && TAG_NAME="latest"  # Fallback
             FULL_IMAGE="$REGISTRY/$IMAGE_NAME:$TAG_NAME"
 
-            # Отладочная информация
-            echo "===================================="
-            echo "Using image: $FULL_IMAGE"
-            echo "Commit SHA: $GITHUB_SHA"
-            echo "Short tag: $TAG_NAME"
-            echo "===================================="
+            echo "=== Deploying $FULL_IMAGE ==="
 
             # Логин в реестр
             echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login cr.selcloud.ru -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
-            # Пул образа с проверкой
-            if ! docker pull "$FULL_IMAGE"; then
-              echo "::error::Failed to pull image $FULL_IMAGE"
-              exit 1
-            fi
+            # Пул образа
+            docker pull "$FULL_IMAGE"
 
-            # Остановка старого контейнера
-            if docker ps -a | grep -q "$CONTAINER_NAME"; then
-              echo "Stopping existing container..."
-              docker stop "$CONTAINER_NAME"
-              docker rm "$CONTAINER_NAME"
-            fi
+            # Остановка старого контейнера (если есть)
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm "$CONTAINER_NAME" 2>/dev/null || true
 
             # Запуск нового контейнера
-            echo "Starting new container..."
             docker run -d \
               -p 8080:8080 \
               --name "$CONTAINER_NAME" \
               --restart unless-stopped \
               "$FULL_IMAGE"
 
-            # Очистка
-            docker system prune -af --filter "until=24h" | grep -v "Total reclaimed space"
+            # Проверка работы контейнера
+            sleep 5  # Даём время на запуск
+            if ! docker ps --filter "name=$CONTAINER_NAME" --format '{{.Status}}' | grep -q 'Up'; then
+              echo "::error::Container failed to start"
+              docker logs "$CONTAINER_NAME" || true
+              exit 1
+            fi
+
+            echo "=== Successfully deployed ==="
