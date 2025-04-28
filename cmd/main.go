@@ -1,65 +1,65 @@
 package main
 
 import (
-	desc "bt_auth/pkg/auth_v1"
+	userAPI "bt_auth/internal/api/user"
+	"bt_auth/internal/config"
+	"bt_auth/internal/config/env"
+	userRepository "bt_auth/internal/repository/user"
+	userService "bt_auth/internal/service/user"
+	desc "bt_auth/pkg/user_v1"
 	"context"
-	"github.com/brianvoe/gofakeit/v6"
+	"flag"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
 	"net"
 )
 
-type server struct {
-	desc.UnimplementedAuthV1Server
-}
+var configPath string
 
-func (s *server) Create(ctx context.Context, request *desc.CreateRequest) (*desc.CreateResponse, error) {
-	log.Printf("Create: %v", request)
-
-	return &desc.CreateResponse{Id: gofakeit.Int64()}, nil
-}
-
-func (s *server) Get(ctx context.Context, request *desc.GetRequest) (*desc.GetResponse, error) {
-	log.Printf("Get: %v", request)
-
-	return &desc.GetResponse{
-		Info: &desc.User{
-			Id: request.Id,
-			Info: &desc.UserInfo{
-				Name:            "Вадим",
-				Email:           gofakeit.Email(),
-				Password:        gofakeit.Password(true, true, true, true, true, 10),
-				PasswordConfirm: gofakeit.Password(true, true, true, true, true, 10),
-				Role:            desc.Role_user,
-			},
-			CreatedAt: timestamppb.New(gofakeit.Date()),
-			UpdatedAt: timestamppb.New(gofakeit.Date()),
-		},
-	}, nil
-}
-
-func (s *server) Update(ctx context.Context, request *desc.UpdateRequest) (*emptypb.Empty, error) {
-	log.Printf("Update: %v", request)
-	return &emptypb.Empty{}, nil
-}
-
-func (s *server) Delete(ctx context.Context, request *desc.DeleteRequest) (*emptypb.Empty, error) {
-	log.Printf("Delete: %v", request)
-	return &emptypb.Empty{}, nil
+func init() {
+	flag.StringVar(&configPath, "config-path", ".env", "path to config file")
 }
 
 func main() {
-	lis, err := net.Listen("tcp", ":8080")
+	flag.Parse()
+
+	ctx := context.Background()
+
+	err := config.Load(configPath)
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
+
+	grpcConfig, err := env.NewGRPCConfig()
+	if err != nil {
+		log.Fatalf("failed to get grpc config: %v", err)
+	}
+
+	dbConfig, err := env.NewDBConfig()
+	if err != nil {
+		log.Fatalf("failed to get db config: %v", err)
+	}
+
+	lis, err := net.Listen("tcp", grpcConfig.Address())
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	pool, err := pgxpool.New(ctx, dbConfig.DSN())
+
+	userRepo := userRepository.NewRepository(pool)
+	userServ := userService.NewService(userRepo)
+
 	s := grpc.NewServer()
 	reflection.Register(s)
-	desc.RegisterAuthV1Server(s, &server{})
+	desc.RegisterUserV1Server(s, userAPI.NewServer(userServ))
 
-	s.Serve(lis)
+	log.Printf("server listening at %v", grpcConfig.Address())
+
+	err = s.Serve(lis)
+	if err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
