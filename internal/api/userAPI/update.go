@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Server) Update(ctx context.Context, request *desc.UpdateRequest) (*emptypb.Empty, error) {
-	err := s.userService.Update(ctx, request.GetId(), converter.ToUpdateRequestFromService(request))
+	err := s.userService.Update(ctx, request.GetId(), converter.ToUpdateRequestFromProto(request))
 	if err != nil {
 		return nil, err
 	}

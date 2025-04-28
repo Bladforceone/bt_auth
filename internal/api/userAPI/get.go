@@ -11,5 +11,5 @@ func (s *Server) Get(ctx context.Context, request *desc.GetRequest) (*desc.GetRe
 	if err != nil {
 		return nil, err
 	}
-	return converter.ToGetResponseFromProto(user), nil
+	return converter.ToGetResponseFromService(user), nil
 }
