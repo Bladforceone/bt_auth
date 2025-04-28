@@ -1,4 +1,4 @@
-package user
+package userAPI
 
 import (
 	desc "bt_auth/pkg/user_v1"

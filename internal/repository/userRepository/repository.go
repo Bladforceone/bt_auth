@@ -1,10 +1,10 @@
-package user
+package userRepository
 
 import (
 	"bt_auth/internal/model"
 	"bt_auth/internal/repository"
-	"bt_auth/internal/repository/user/converter"
-	"bt_auth/internal/repository/user/model"
+	"bt_auth/internal/repository/userRepository/converter"
+	"bt_auth/internal/repository/userRepository/model"
 	"context"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"

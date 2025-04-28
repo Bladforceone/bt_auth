@@ -1,4 +1,4 @@
-package user
+package userAPI
 
 import (
 	"bt_auth/internal/service"

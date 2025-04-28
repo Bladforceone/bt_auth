@@ -2,7 +2,7 @@ package converter
 
 import (
 	"bt_auth/internal/model"
-	"bt_auth/internal/repository/user/model"
+	"bt_auth/internal/repository/userRepository/model"
 )
 
 func ToUserFromRepo(user *modelRepo.User) *model.User {
