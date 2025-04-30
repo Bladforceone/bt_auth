@@ -2,6 +2,8 @@ package app
 
 import (
 	"bt_auth/internal/api/userAPI"
+	"bt_auth/internal/client/db"
+	"bt_auth/internal/client/db/pg"
 	"bt_auth/internal/closer"
 	"bt_auth/internal/config"
 	"bt_auth/internal/config/env"
@@ -10,7 +12,6 @@ import (
 	"bt_auth/internal/service"
 	"bt_auth/internal/service/userService"
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 )
 
@@ -18,7 +19,7 @@ type ServiceProvider struct {
 	dbConfig   config.DBConfig
 	grpcConfig config.GRPCConfig
 
-	dbPool         *pgxpool.Pool
+	dbClient       db.Client
 	userRepository repository.UserRepository
 
 	userService service.UserService
@@ -55,31 +56,28 @@ func (sp *ServiceProvider) GRPCConfig() config.GRPCConfig {
 	return sp.grpcConfig
 }
 
-func (sp *ServiceProvider) DBPool(ctx context.Context) *pgxpool.Pool {
-	if sp.dbPool == nil {
-		pool, err := pgxpool.New(ctx, sp.DBConfig().DSN())
+func (sp *ServiceProvider) DBClient(ctx context.Context) db.Client {
+	if sp.dbClient == nil {
+		cl, err := pg.New(ctx, sp.DBConfig().DSN())
 		if err != nil {
 			log.Fatalf("failed to create db pool: %s", err.Error())
 		}
 
-		err = pool.Ping(ctx)
+		err = cl.DB().Ping(ctx)
 		if err != nil {
 			log.Fatalf("failed to ping db: %s", err.Error())
 		}
-		closer.Add(func() error {
-			pool.Close()
-			return nil
-		})
+		closer.Add(cl.Close)
 
-		sp.dbPool = pool
+		sp.dbClient = cl
 	}
 
-	return sp.dbPool
+	return sp.dbClient
 }
 
 func (sp *ServiceProvider) UserRepository(ctx context.Context) repository.UserRepository {
 	if sp.userRepository == nil {
-		sp.userRepository = userRepository.NewRepository(sp.DBPool(ctx))
+		sp.userRepository = userRepository.NewRepository(sp.DBClient(ctx))
 	}
 
 	return sp.userRepository

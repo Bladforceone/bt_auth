@@ -3,7 +3,9 @@ module bt_auth
 go 1.24
 
 require (
+	github.com/Arlandaren/pgxWrappy v0.0.0-20250318142853-acd23b20a534
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/georgysavva/scany/v2 v2.1.4
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/joho/godotenv v1.5.1
 	google.golang.org/grpc v1.65.0

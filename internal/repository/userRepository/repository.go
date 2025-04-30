@@ -1,13 +1,13 @@
 package userRepository
 
 import (
+	"bt_auth/internal/client/db"
 	"bt_auth/internal/model"
 	"bt_auth/internal/repository"
 	"bt_auth/internal/repository/userRepository/converter"
 	"bt_auth/internal/repository/userRepository/model"
 	"context"
 	sq "github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 )
 
@@ -24,10 +24,10 @@ const (
 )
 
 type repo struct {
-	db *pgxpool.Pool
+	db db.Client
 }
 
-func NewRepository(db *pgxpool.Pool) repository.UserRepository {
+func NewRepository(db db.Client) repository.UserRepository {
 	return &repo{db: db}
 }
 
@@ -43,7 +43,13 @@ func (r *repo) Create(ctx context.Context, user *model.UserInfo) (int64, error) 
 	if err != nil {
 		return 0, err
 	}
-	err = r.db.QueryRow(ctx, sql, args...).Scan(&userID)
+
+	q := db.Query{
+		Name:     "user_repository.Create",
+		QueryRaw: sql,
+	}
+
+	err = r.db.DB().QueryRowContext(ctx, q, args...).Scan(&userID)
 	if err != nil {
 		return 0, err
 	}
@@ -64,10 +70,14 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 		return nil, err
 	}
 
+	q := db.Query{
+		Name:     "user_repository.Get",
+		QueryRaw: sql,
+	}
+
 	var user modelRepo.User
 	user.Info = &modelRepo.Info{}
-	err = r.db.QueryRow(ctx, sql, args...).
-		Scan(&user.ID, &user.Info.Name, &user.Info.Email, &user.Info.Role, &user.CreatedAt, &user.UpdatedAt)
+	err = r.db.DB().ScanOneContext(ctx, &user, q, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +102,12 @@ func (r *repo) Update(ctx context.Context, id int64, user *model.UserInfo) error
 		return err
 	}
 
-	_, err = r.db.Exec(ctx, query, args...)
+	q := db.Query{
+		Name:     "user_repository.Update",
+		QueryRaw: query,
+	}
+
+	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return err
 	}
@@ -110,7 +125,12 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 		return err
 	}
 
-	_, err = r.db.Exec(ctx, query, args...)
+	q := db.Query{
+		Name:     "user_repository.Delete",
+		QueryRaw: query,
+	}
+
+	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return err
 	}
