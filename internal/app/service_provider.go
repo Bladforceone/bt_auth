@@ -4,6 +4,7 @@ import (
 	"bt_auth/internal/api/userAPI"
 	"bt_auth/internal/client/db"
 	"bt_auth/internal/client/db/pg"
+	"bt_auth/internal/client/db/transaction"
 	"bt_auth/internal/closer"
 	"bt_auth/internal/config"
 	"bt_auth/internal/config/env"
@@ -18,8 +19,10 @@ import (
 type ServiceProvider struct {
 	dbConfig   config.DBConfig
 	grpcConfig config.GRPCConfig
+	httpConfig config.HTTPConfig
 
 	dbClient       db.Client
+	txManager      db.TxManager
 	userRepository repository.UserRepository
 
 	userService service.UserService
@@ -56,6 +59,19 @@ func (sp *ServiceProvider) GRPCConfig() config.GRPCConfig {
 	return sp.grpcConfig
 }
 
+func (sp *ServiceProvider) HTTPConfig() config.HTTPConfig {
+	if sp.httpConfig == nil {
+		cfg, err := env.NewHTTPConfig()
+		if err != nil {
+			log.Fatalf("failed to get http config: %s", err.Error())
+		}
+
+		sp.httpConfig = cfg
+	}
+
+	return sp.httpConfig
+}
+
 func (sp *ServiceProvider) DBClient(ctx context.Context) db.Client {
 	if sp.dbClient == nil {
 		cl, err := pg.New(ctx, sp.DBConfig().DSN())
@@ -75,6 +91,14 @@ func (sp *ServiceProvider) DBClient(ctx context.Context) db.Client {
 	return sp.dbClient
 }
 
+func (sp *ServiceProvider) TxManager(ctx context.Context) db.TxManager {
+	if sp.txManager == nil {
+		sp.txManager = transaction.NewTransactionManager(sp.DBClient(ctx).DB())
+	}
+
+	return sp.txManager
+}
+
 func (sp *ServiceProvider) UserRepository(ctx context.Context) repository.UserRepository {
 	if sp.userRepository == nil {
 		sp.userRepository = userRepository.NewRepository(sp.DBClient(ctx))
@@ -85,7 +109,10 @@ func (sp *ServiceProvider) UserRepository(ctx context.Context) repository.UserRe
 
 func (sp *ServiceProvider) UserService(ctx context.Context) service.UserService {
 	if sp.userService == nil {
-		sp.userService = userService.NewService(sp.UserRepository(ctx))
+		sp.userService = userService.NewService(
+			sp.UserRepository(ctx),
+			sp.TxManager(ctx),
+		)
 	}
 
 	return sp.userService

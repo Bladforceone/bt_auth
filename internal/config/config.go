@@ -14,6 +14,10 @@ type GRPCConfig interface {
 	Address() string
 }
 
+type HTTPConfig interface {
+	Address() string
+}
+
 type DBConfig interface {
 	DSN() string
 }

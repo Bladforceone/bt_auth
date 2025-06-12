@@ -7,6 +7,8 @@
 package user_v1
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -539,12 +541,12 @@ var File_user_proto protoreflect.FileDescriptor
 const file_user_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"user.proto\x12\auser.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1egoogle/protobuf/wrappers.proto\"\x9e\x01\n" +
-	"\bUserInfo\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\x12)\n" +
-	"\x10password_confirm\x18\x04 \x01(\tR\x0fpasswordConfirm\x12!\n" +
+	"user.proto\x12\auser.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x17validate/validate.proto\x1a\x1cgoogle/api/annotations.proto\"\xc8\x01\n" +
+	"\bUserInfo\x12\x1d\n" +
+	"\x04name\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18dR\x04name\x12!\n" +
+	"\x05email\x18\x02 \x01(\tB\v\xfaB\br\x06\x10\x05\x18d`\x01R\x05email\x12#\n" +
+	"\bpassword\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\bR\bpassword\x122\n" +
+	"\x10password_confirm\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x10\bR\x0fpasswordConfirm\x12!\n" +
 	"\x04role\x18\x05 \x01(\x0e2\r.user.v1.RoleR\x04role\"\xb3\x01\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12%\n" +
@@ -552,14 +554,14 @@ const file_user_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"6\n" +
-	"\rCreateRequest\x12%\n" +
-	"\x04info\x18\x01 \x01(\v2\x11.user.v1.UserInfoR\x04info\" \n" +
+	"updated_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"@\n" +
+	"\rCreateRequest\x12/\n" +
+	"\x04info\x18\x01 \x01(\v2\x11.user.v1.UserInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04info\" \n" +
 	"\x0eCreateResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"\x1c\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"%\n" +
 	"\n" +
-	"GetRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"\xe0\x01\n" +
+	"GetRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x02id\"\xe0\x01\n" +
 	"\vGetResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -568,21 +570,23 @@ const file_user_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x85\x01\n" +
-	"\rUpdateRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x120\n" +
-	"\x04name\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\x04name\x122\n" +
-	"\x05email\x18\x03 \x01(\v2\x1c.google.protobuf.StringValueR\x05email\"\x1f\n" +
-	"\rDeleteRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id*\x1b\n" +
+	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xa0\x01\n" +
+	"\rUpdateRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x02id\x129\n" +
+	"\x04name\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueB\a\xfaB\x04r\x02\x10\x01R\x04name\x12;\n" +
+	"\x05email\x18\x03 \x01(\v2\x1c.google.protobuf.StringValueB\a\xfaB\x04r\x02`\x01R\x05email\"(\n" +
+	"\rDeleteRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x02id*\x1b\n" +
 	"\x04Role\x12\b\n" +
 	"\x04user\x10\x00\x12\t\n" +
-	"\x05admin\x10\x012\xe9\x01\n" +
-	"\x06UserV1\x129\n" +
-	"\x06Create\x12\x16.user.v1.CreateRequest\x1a\x17.user.v1.CreateResponse\x120\n" +
-	"\x03Get\x12\x13.user.v1.GetRequest\x1a\x14.user.v1.GetResponse\x128\n" +
-	"\x06Update\x12\x16.user.v1.UpdateRequest\x1a\x16.google.protobuf.Empty\x128\n" +
-	"\x06Delete\x12\x16.user.v1.DeleteRequest\x1a\x16.google.protobuf.EmptyB\x1eZ\x1cbt_auth/pkg/user/v1; user_v1b\x06proto3"
+	"\x05admin\x10\x012\xba\x02\n" +
+	"\x06UserV1\x12Q\n" +
+	"\x06Create\x12\x16.user.v1.CreateRequest\x1a\x17.user.v1.CreateResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x04info\"\b/v1/user\x12B\n" +
+	"\x03Get\x12\x13.user.v1.GetRequest\x1a\x14.user.v1.GetResponse\"\x10\x82\xd3\xe4\x93\x02\n" +
+	"\x12\b/v1/user\x12M\n" +
+	"\x06Update\x12\x16.user.v1.UpdateRequest\x1a\x16.google.protobuf.Empty\"\x13\x82\xd3\xe4\x93\x02\r:\x01*2\b/v1/user\x12J\n" +
+	"\x06Delete\x12\x16.user.v1.DeleteRequest\x1a\x16.google.protobuf.Empty\"\x10\x82\xd3\xe4\x93\x02\n" +
+	"*\b/v1/userB\x1eZ\x1cbt_auth/pkg/user/v1; user_v1b\x06proto3"
 
 var (
 	file_user_proto_rawDescOnce sync.Once

@@ -49,7 +49,7 @@ func (r *repo) Create(ctx context.Context, user *model.UserInfo) (int64, error) 
 		QueryRaw: sql,
 	}
 
-	err = r.db.DB().QueryRowContext(ctx, q, args...).Scan(&userID)
+	err = r.db.DB().QueryRow(ctx, q, args...).Scan(&userID)
 	if err != nil {
 		return 0, err
 	}
@@ -107,7 +107,7 @@ func (r *repo) Update(ctx context.Context, id int64, user *model.UserInfo) error
 		QueryRaw: query,
 	}
 
-	_, err = r.db.DB().ExecContext(ctx, q, args...)
+	_, err = r.db.DB().Exec(ctx, q, args...)
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 		QueryRaw: query,
 	}
 
-	_, err = r.db.DB().ExecContext(ctx, q, args...)
+	_, err = r.db.DB().Exec(ctx, q, args...)
 	if err != nil {
 		return err
 	}
